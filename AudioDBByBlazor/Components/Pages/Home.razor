@@ -1,9 +1,8 @@
 @page "/"
-@using AudioDBByBlazor.Models
-@using AudioDBByBlazor.Services
+@using Microsoft.AspNetCore.Components.Web
 @inject AudioDbService AudioDb
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>AudioDB by Blazor – Recherche</PageTitle>
 
@@ -43,7 +42,8 @@ else if (_artists.Any())
     <div class="artists-grid">
         @foreach (var artist in _artists)
         {
-            <div class="artist-card" @onclick="() => GoToArtist(artist.IdArtist!)">
+            var artistId = artist.IdArtist!;
+            <div class="artist-card" @onclick="() => GoToArtist(artistId)">
                 @if (!string.IsNullOrEmpty(artist.StrArtistThumb))
                 {
                     <img src="@artist.StrArtistThumb" alt="@artist.StrArtist" loading="lazy" />
@@ -55,7 +55,7 @@ else if (_artists.Any())
                 <div class="artist-card-body">
                     <div class="artist-name">@artist.StrArtist</div>
                     <div class="artist-meta">
-                        @artist.StrGenre @(artist.StrCountry != null ? $"· {artist.StrCountry}" : "")
+                        @artist.StrGenre @(artist.StrCountry != null ? "· " + artist.StrCountry : "")
                     </div>
                 </div>
             </div>
@@ -93,6 +93,5 @@ else
         if (e.Key == "Enter") await Search();
     }
 
-    private void GoToArtist(string id) =>
-        Navigation.NavigateTo($"/artist/{id}");
+    private void GoToArtist(string id) => Navigation.NavigateTo("/artist/" + id);
 }

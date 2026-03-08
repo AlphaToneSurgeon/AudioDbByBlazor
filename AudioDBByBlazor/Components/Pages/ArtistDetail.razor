@@ -1,12 +1,10 @@
 @page "/artist/{Id}"
-@using AudioDBByBlazor.Models
-@using AudioDBByBlazor.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AudioDbService AudioDb
 @inject FavorisService FavorisService
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>@(_artist?.StrArtist ?? "Artiste") – AudioDB</PageTitle>
 
@@ -58,8 +56,7 @@ else
             <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; align-items: center;">
                 <AuthorizeView>
                     <Authorized>
-                        <button class="btn-fav @(_isFavori ? "active" : "")"
-                                @onclick="ToggleFavori">
+                        <button class="@FavBtnClass" @onclick="ToggleFavori">
                             @(_isFavori ? "⭐ En favori" : "☆ Ajouter aux favoris")
                         </button>
                     </Authorized>
@@ -67,7 +64,7 @@ else
                         <a href="/login" class="btn btn-secondary">⭐ Connectez-vous pour favoris</a>
                     </NotAuthorized>
                 </AuthorizeView>
-                <button class="btn btn-secondary" @onclick="() => Navigation.NavigateTo('/')">← Retour</button>
+                <button class="btn btn-secondary" @onclick="GoBack">← Retour</button>
             </div>
         </div>
     </div>
@@ -102,6 +99,8 @@ else
     private bool _isFavori = false;
     private string? _userId;
 
+    private string FavBtnClass => _isFavori ? "btn-fav active" : "btn-fav";
+
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
@@ -112,13 +111,14 @@ else
         if (_artist != null)
         {
             _albums = await AudioDb.GetAlbumsByArtistAsync(Id);
-
             if (_userId != null)
                 _isFavori = await FavorisService.IsFavoriAsync(_userId, Id);
         }
 
         _loading = false;
     }
+
+    private void GoBack() => Navigation.NavigateTo("/");
 
     private async Task ToggleFavori()
     {

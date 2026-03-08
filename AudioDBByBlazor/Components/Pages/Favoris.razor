@@ -1,13 +1,11 @@
 @page "/favoris"
-@using AudioDBByBlazor.Models
-@using AudioDBByBlazor.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @attribute [Authorize]
 @inject FavorisService FavorisService
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Mes Favoris – AudioDB</PageTitle>
 
@@ -27,7 +25,7 @@ else if (!_favoris.Any())
         <h3>Aucun favori encore</h3>
         <p>Recherchez des artistes et ajoutez-les à vos favoris.</p>
         <br />
-        <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo('/')">🔍 Rechercher</button>
+        <button class="btn btn-primary" @onclick="GoHome">🔍 Rechercher</button>
     </div>
 }
 else
@@ -39,6 +37,7 @@ else
     <div class="favoris-list">
         @foreach (var f in _favoris)
         {
+            var favoriId = f.IdArtist;
             <div class="favori-row">
                 @if (!string.IsNullOrEmpty(f.StrArtistThumb))
                 {
@@ -52,12 +51,16 @@ else
                 <div class="favori-info">
                     <div class="favori-name">@f.StrArtist</div>
                     <div class="favori-meta">
-                        @f.StrGenre @(f.StrCountry != null ? $"· {f.StrCountry}" : "")
+                        @f.StrGenre @(f.StrCountry != null ? "· " + f.StrCountry : "")
                         · Ajouté le @f.DateAjout.ToString("dd/MM/yyyy")
                     </div>
                     @if (f.NoteSur10.HasValue)
                     {
-                        <div class="stars">@string.Concat(Enumerable.Repeat("★", f.NoteSur10.Value))@string.Concat(Enumerable.Repeat("☆", 10 - f.NoteSur10.Value)) (@f.NoteSur10/10)</div>
+                        <div class="stars">
+                            @string.Concat(Enumerable.Repeat("★", f.NoteSur10.Value))
+                            @string.Concat(Enumerable.Repeat("☆", 10 - f.NoteSur10.Value))
+                            (@f.NoteSur10/10)
+                        </div>
                     }
                     @if (!string.IsNullOrEmpty(f.NotePersonnelle))
                     {
@@ -75,7 +78,7 @@ else
                 </div>
 
                 <div class="favori-actions">
-                    <button class="btn btn-secondary" @onclick="() => Navigation.NavigateTo($"/artist/{f.IdArtist}")">
+                    <button class="btn btn-secondary" @onclick="() => GoToArtist(favoriId)">
                         👁 Voir
                     </button>
                     <button class="btn btn-secondary" @onclick="() => OpenEdit(f)">
@@ -140,6 +143,10 @@ else
 
         _loading = false;
     }
+
+    private void GoHome() => Navigation.NavigateTo("/");
+
+    private void GoToArtist(string artistId) => Navigation.NavigateTo("/artist/" + artistId);
 
     private void OpenEdit(Favori f)
     {
