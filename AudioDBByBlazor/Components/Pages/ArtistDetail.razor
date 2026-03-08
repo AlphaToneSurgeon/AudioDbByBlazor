@@ -1,0 +1,148 @@
+@page "/artist/{Id}"
+@using AudioDBByBlazor.Models
+@using AudioDBByBlazor.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AudioDbService AudioDb
+@inject FavorisService FavorisService
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(_artist?.StrArtist ?? "Artiste") – AudioDB</PageTitle>
+
+@if (_loading)
+{
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement...</p>
+    </div>
+}
+else if (_artist is null)
+{
+    <div class="empty-state">
+        <div class="empty-icon">❓</div>
+        <p>Artiste introuvable.</p>
+    </div>
+}
+else
+{
+    <div class="artist-hero">
+        @if (!string.IsNullOrEmpty(_artist.StrArtistThumb))
+        {
+            <img class="artist-hero-img" src="@_artist.StrArtistThumb" alt="@_artist.StrArtist" />
+        }
+        else
+        {
+            <div class="artist-hero-placeholder">🎤</div>
+        }
+
+        <div class="artist-hero-info">
+            <h1>@_artist.StrArtist</h1>
+
+            <div class="artist-tags">
+                @if (!string.IsNullOrEmpty(_artist.StrGenre))
+                    { <span class="tag">🎵 @_artist.StrGenre</span> }
+                @if (!string.IsNullOrEmpty(_artist.StrCountry))
+                    { <span class="tag">🌍 @_artist.StrCountry</span> }
+                @if (!string.IsNullOrEmpty(_artist.IntFormedYear))
+                    { <span class="tag">📅 @_artist.IntFormedYear</span> }
+                @if (!string.IsNullOrEmpty(_artist.StrStyle))
+                    { <span class="tag">🎸 @_artist.StrStyle</span> }
+            </div>
+
+            @if (!string.IsNullOrEmpty(_artist.StrBiographyEN))
+            {
+                <p class="artist-bio">@_artist.StrBiographyEN</p>
+            }
+
+            <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; align-items: center;">
+                <AuthorizeView>
+                    <Authorized>
+                        <button class="btn-fav @(_isFavori ? "active" : "")"
+                                @onclick="ToggleFavori">
+                            @(_isFavori ? "⭐ En favori" : "☆ Ajouter aux favoris")
+                        </button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/login" class="btn btn-secondary">⭐ Connectez-vous pour favoris</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <button class="btn btn-secondary" @onclick="() => Navigation.NavigateTo('/')">← Retour</button>
+            </div>
+        </div>
+    </div>
+
+    @if (_albums.Any())
+    {
+        <h2>DISCOGRAPHIE</h2>
+        <div class="albums-grid">
+            @foreach (var album in _albums.OrderByDescending(a => a.IntYearReleased))
+            {
+                <div class="album-card">
+                    @if (!string.IsNullOrEmpty(album.StrAlbumThumb))
+                    {
+                        <img src="@album.StrAlbumThumb" alt="@album.StrAlbum" loading="lazy" />
+                    }
+                    <div class="album-card-body">
+                        <div class="album-title">@album.StrAlbum</div>
+                        <div class="album-year">@album.IntYearReleased</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    private Artist? _artist;
+    private List<Album> _albums = new();
+    private bool _loading = true;
+    private bool _isFavori = false;
+    private string? _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        _artist = await AudioDb.GetArtistByIdAsync(Id);
+
+        if (_artist != null)
+        {
+            _albums = await AudioDb.GetAlbumsByArtistAsync(Id);
+
+            if (_userId != null)
+                _isFavori = await FavorisService.IsFavoriAsync(_userId, Id);
+        }
+
+        _loading = false;
+    }
+
+    private async Task ToggleFavori()
+    {
+        if (_userId is null || _artist is null) return;
+
+        if (_isFavori)
+        {
+            var favoris = await FavorisService.GetFavorisAsync(_userId);
+            var f = favoris.FirstOrDefault(x => x.IdArtist == Id);
+            if (f != null) await FavorisService.DeleteFavoriAsync(_userId, f.Id);
+            _isFavori = false;
+        }
+        else
+        {
+            var favori = new Favori
+            {
+                IdArtist = _artist.IdArtist!,
+                StrArtist = _artist.StrArtist!,
+                StrArtistThumb = _artist.StrArtistThumb,
+                StrGenre = _artist.StrGenre,
+                StrCountry = _artist.StrCountry,
+            };
+            await FavorisService.AddFavoriAsync(_userId, favori);
+            _isFavori = true;
+        }
+    }
+}

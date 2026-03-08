@@ -1,7 +1,98 @@
-﻿@page "/"
+@page "/"
+@using AudioDBByBlazor.Models
+@using AudioDBByBlazor.Services
+@inject AudioDbService AudioDb
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>AudioDB by Blazor – Recherche</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="search-hero">
+    <h1>DÉCOUVREZ LA MUSIQUE</h1>
+    <p class="search-subtitle">Recherchez vos artistes préférés et sauvegardez vos favoris</p>
 
-Welcome to your new app.
+    <div class="search-bar">
+        <input class="search-input"
+               type="text"
+               placeholder="Nom d'un artiste..."
+               @bind="_query"
+               @onkeypress="OnKeyPress" />
+        <button class="btn-search" @onclick="Search" disabled="@_loading">
+            @(_loading ? "⏳" : "🔍 Rechercher")
+        </button>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Recherche en cours...</p>
+    </div>
+}
+else if (_searched && !_artists.Any())
+{
+    <div class="empty-state">
+        <div class="empty-icon">🎵</div>
+        <h3>Aucun résultat</h3>
+        <p>Essayez un autre nom d'artiste.</p>
+    </div>
+}
+else if (_artists.Any())
+{
+    <div class="artists-grid">
+        @foreach (var artist in _artists)
+        {
+            <div class="artist-card" @onclick="() => GoToArtist(artist.IdArtist!)">
+                @if (!string.IsNullOrEmpty(artist.StrArtistThumb))
+                {
+                    <img src="@artist.StrArtistThumb" alt="@artist.StrArtist" loading="lazy" />
+                }
+                else
+                {
+                    <div class="artist-card-placeholder">🎤</div>
+                }
+                <div class="artist-card-body">
+                    <div class="artist-name">@artist.StrArtist</div>
+                    <div class="artist-meta">
+                        @artist.StrGenre @(artist.StrCountry != null ? $"· {artist.StrCountry}" : "")
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-icon">🎧</div>
+        <p>Entrez le nom d'un artiste pour commencer</p>
+    </div>
+}
+
+@code {
+    private string _query = "";
+    private List<Artist> _artists = new();
+    private bool _loading = false;
+    private bool _searched = false;
+
+    private async Task Search()
+    {
+        if (string.IsNullOrWhiteSpace(_query)) return;
+        _loading = true;
+        _searched = false;
+
+        _artists = await AudioDb.SearchArtistsAsync(_query.Trim());
+
+        _loading = false;
+        _searched = true;
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Search();
+    }
+
+    private void GoToArtist(string id) =>
+        Navigation.NavigateTo($"/artist/{id}");
+}

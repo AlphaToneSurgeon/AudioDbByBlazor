@@ -1,0 +1,20 @@
+## .NET
+obj/
+bin/
+*.user
+*.suo
+.vs/
+audiodb.db
+audiodb.db-shm
+audiodb.db-wal
+
+## Data (favoris JSON - ne pas versionner les données utilisateurs)
+Data/favoris/
+
+## Logs
+*.log
+logs/
+
+## OS
+.DS_Store
+Thumbs.db

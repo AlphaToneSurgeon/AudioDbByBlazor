@@ -1,23 +1,35 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<CascadingAuthenticationState>
+    <div class="app-shell">
+        <nav class="navbar">
+            <a href="/" class="brand">🎵 AudioDB</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Recherche</a>
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="/favoris" class="nav-link">⭐ Mes Favoris</a>
+                        <span class="nav-user">@context.User.Identity?.Name</span>
+                        <form method="post" action="/logout">
+                            <button type="submit" class="btn-logout">Déconnexion</button>
+                        </form>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/login" class="nav-link">Connexion</a>
+                        <a href="/register" class="nav-btn">Inscription</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </nav>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+        <main class="main-content">
             @Body
-        </article>
-    </main>
-</div>
+        </main>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+        <footer class="footer">
+            <p>Données fournies par <a href="https://www.theaudiodb.com" target="_blank">TheAudioDB</a></p>
+        </footer>
+    </div>
+</CascadingAuthenticationState>

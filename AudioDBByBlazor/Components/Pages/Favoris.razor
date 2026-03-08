@@ -1,0 +1,173 @@
+@page "/favoris"
+@using AudioDBByBlazor.Models
+@using AudioDBByBlazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
+@inject FavorisService FavorisService
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Mes Favoris – AudioDB</PageTitle>
+
+<h1>MES FAVORIS</h1>
+
+@if (_loading)
+{
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement...</p>
+    </div>
+}
+else if (!_favoris.Any())
+{
+    <div class="empty-state">
+        <div class="empty-icon">⭐</div>
+        <h3>Aucun favori encore</h3>
+        <p>Recherchez des artistes et ajoutez-les à vos favoris.</p>
+        <br />
+        <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo('/')">🔍 Rechercher</button>
+    </div>
+}
+else
+{
+    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
+        @_favoris.Count favori(s) sauvegardé(s)
+    </p>
+
+    <div class="favoris-list">
+        @foreach (var f in _favoris)
+        {
+            <div class="favori-row">
+                @if (!string.IsNullOrEmpty(f.StrArtistThumb))
+                {
+                    <img class="favori-thumb" src="@f.StrArtistThumb" alt="@f.StrArtist" />
+                }
+                else
+                {
+                    <div class="favori-thumb-placeholder">🎤</div>
+                }
+
+                <div class="favori-info">
+                    <div class="favori-name">@f.StrArtist</div>
+                    <div class="favori-meta">
+                        @f.StrGenre @(f.StrCountry != null ? $"· {f.StrCountry}" : "")
+                        · Ajouté le @f.DateAjout.ToString("dd/MM/yyyy")
+                    </div>
+                    @if (f.NoteSur10.HasValue)
+                    {
+                        <div class="stars">@string.Concat(Enumerable.Repeat("★", f.NoteSur10.Value))@string.Concat(Enumerable.Repeat("☆", 10 - f.NoteSur10.Value)) (@f.NoteSur10/10)</div>
+                    }
+                    @if (!string.IsNullOrEmpty(f.NotePersonnelle))
+                    {
+                        <div class="favori-note">"@f.NotePersonnelle"</div>
+                    }
+                    @if (!string.IsNullOrEmpty(f.TagsPersonnels))
+                    {
+                        <div class="artist-tags" style="margin-top: 0.3rem;">
+                            @foreach (var tag in f.TagsPersonnels.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <span class="tag">@tag.Trim()</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="favori-actions">
+                    <button class="btn btn-secondary" @onclick="() => Navigation.NavigateTo($"/artist/{f.IdArtist}")">
+                        👁 Voir
+                    </button>
+                    <button class="btn btn-secondary" @onclick="() => OpenEdit(f)">
+                        ✏️ Modifier
+                    </button>
+                    <button class="btn btn-danger" @onclick="() => Delete(f.Id)">
+                        🗑
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@* Modal d'édition *@
+@if (_editTarget != null)
+{
+    <div class="modal-overlay" @onclick="CloseEdit">
+        <div class="modal" @onclick:stopPropagation>
+            <h3>✏️ Modifier – @_editTarget.StrArtist</h3>
+
+            <div class="form-group">
+                <label class="form-label">Note personnelle</label>
+                <input class="form-control" @bind="_editNote" placeholder="Mon avis sur cet artiste..." />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Note sur 10 : @_editNoteSur10</label>
+                <input type="range" min="0" max="10" @bind="_editNoteSur10" style="width:100%; accent-color: var(--accent);" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tags personnels (séparés par des virgules)</label>
+                <input class="form-control" @bind="_editTags" placeholder="rock, classique, live..." />
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="CloseEdit">Annuler</button>
+                <button class="btn btn-primary" @onclick="SaveEdit">💾 Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Favori> _favoris = new();
+    private bool _loading = true;
+    private string? _userId;
+
+    private Favori? _editTarget;
+    private string _editNote = "";
+    private int _editNoteSur10 = 5;
+    private string _editTags = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (_userId != null)
+            _favoris = await FavorisService.GetFavorisAsync(_userId);
+
+        _loading = false;
+    }
+
+    private void OpenEdit(Favori f)
+    {
+        _editTarget = f;
+        _editNote = f.NotePersonnelle ?? "";
+        _editNoteSur10 = f.NoteSur10 ?? 5;
+        _editTags = f.TagsPersonnels ?? "";
+    }
+
+    private void CloseEdit() => _editTarget = null;
+
+    private async Task SaveEdit()
+    {
+        if (_editTarget is null || _userId is null) return;
+
+        _editTarget.NotePersonnelle = _editNote;
+        _editTarget.NoteSur10 = _editNoteSur10;
+        _editTarget.TagsPersonnels = _editTags;
+
+        await FavorisService.UpdateFavoriAsync(_userId, _editTarget);
+        _editTarget = null;
+        _favoris = await FavorisService.GetFavorisAsync(_userId);
+    }
+
+    private async Task Delete(Guid id)
+    {
+        if (_userId is null) return;
+        await FavorisService.DeleteFavoriAsync(_userId, id);
+        _favoris = await FavorisService.GetFavorisAsync(_userId);
+    }
+}
