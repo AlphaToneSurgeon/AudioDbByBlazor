@@ -1,9 +1,4 @@
 @page "/register"
-@using AudioDBByBlazor.Models
-@using Microsoft.AspNetCore.Identity
-@inject UserManager<AppUser> UserManager
-@inject SignInManager<AppUser> SignInManager
-@inject NavigationManager Navigation
 
 <PageTitle>Inscription – AudioDB</PageTitle>
 
@@ -12,34 +7,31 @@
         <h1>INSCRIPTION</h1>
         <p class="auth-subtitle">Créez votre compte pour sauvegarder vos favoris</p>
 
-        @if (_errors.Any())
+        @if (!string.IsNullOrEmpty(Error))
         {
             <div class="error-message">
-                @foreach (var e in _errors)
-                {
-                    <div>@e</div>
-                }
+                Erreur lors de la création du compte. Vérifiez vos informations.
             </div>
         }
 
-        <div class="form-group">
-            <label class="form-label">Pseudo (affiché)</label>
-            <input class="form-control" @bind="_displayName" placeholder="MonPseudo" />
-        </div>
+        <form method="post" action="/account/register">
+            <div class="form-group">
+                <label class="form-label">Pseudo (affiché)</label>
+                <input class="form-control" type="text" name="displayName" placeholder="MonPseudo" />
+            </div>
 
-        <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-control" type="email" @bind="_email" placeholder="votre@email.com" />
-        </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" name="email" placeholder="votre@email.com" required />
+            </div>
 
-        <div class="form-group">
-            <label class="form-label">Mot de passe</label>
-            <input class="form-control" type="password" @bind="_password" placeholder="Min. 6 caractères" />
-        </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input class="form-control" type="password" name="password" placeholder="Min. 6 caractères" required />
+            </div>
 
-        <button class="btn-submit" @onclick="HandleRegister" disabled="@_loading">
-            @(_loading ? "Création..." : "Créer mon compte")
-        </button>
+            <button type="submit" class="btn-submit">Créer mon compte</button>
+        </form>
 
         <p class="auth-link">
             Déjà un compte ? <a href="/login">Se connecter</a>
@@ -48,35 +40,5 @@
 </div>
 
 @code {
-    private string _displayName = "";
-    private string _email = "";
-    private string _password = "";
-    private List<string> _errors = new();
-    private bool _loading = false;
-
-    private async Task HandleRegister()
-    {
-        _loading = true;
-        _errors.Clear();
-
-        var user = new AppUser
-        {
-            UserName = _email,
-            Email = _email,
-            DisplayName = _displayName
-        };
-
-        var result = await UserManager.CreateAsync(user, _password);
-
-        if (result.Succeeded)
-        {
-            await SignInManager.SignInAsync(user, isPersistent: false);
-            Navigation.NavigateTo("/", forceLoad: true);
-        }
-        else
-        {
-            _errors = result.Errors.Select(e => e.Description).ToList();
-            _loading = false;
-        }
-    }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
 }

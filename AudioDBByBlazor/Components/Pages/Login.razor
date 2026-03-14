@@ -1,9 +1,4 @@
 @page "/login"
-@using AudioDBByBlazor.Models
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<AppUser> SignInManager
-@inject NavigationManager Navigation
-@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Connexion – AudioDB</PageTitle>
 
@@ -12,24 +7,26 @@
         <h1>CONNEXION</h1>
         <p class="auth-subtitle">Accédez à vos favoris musicaux</p>
 
-        @if (!string.IsNullOrEmpty(_error))
+        @if (Error == "1")
         {
-            <div class="error-message">@_error</div>
+            <div class="error-message">Email ou mot de passe incorrect.</div>
         }
 
-        <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-control" type="email" @bind="_email" placeholder="votre@email.com" />
-        </div>
+        <form method="post" action="/account/login">
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
 
-        <div class="form-group">
-            <label class="form-label">Mot de passe</label>
-            <input class="form-control" type="password" @bind="_password" placeholder="••••••" />
-        </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" name="email" placeholder="votre@email.com" required />
+            </div>
 
-        <button class="btn-submit" @onclick="HandleLogin" disabled="@_loading">
-            @(_loading ? "Connexion..." : "Se connecter")
-        </button>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input class="form-control" type="password" name="password" placeholder="••••••" required />
+            </div>
+
+            <button type="submit" class="btn-submit">Se connecter</button>
+        </form>
 
         <p class="auth-link">
             Pas encore de compte ? <a href="/register">S'inscrire</a>
@@ -38,29 +35,6 @@
 </div>
 
 @code {
-    private string _email = "";
-    private string _password = "";
-    private string _error = "";
-    private bool _loading = false;
-
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
-
-    private async Task HandleLogin()
-    {
-        _loading = true;
-        _error = "";
-
-        var result = await SignInManager.PasswordSignInAsync(_email, _password, false, false);
-
-        if (result.Succeeded)
-        {
-            Navigation.NavigateTo(ReturnUrl ?? "/", forceLoad: true);
-        }
-        else
-        {
-            _error = "Email ou mot de passe incorrect.";
-            _loading = false;
-        }
-    }
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
 }

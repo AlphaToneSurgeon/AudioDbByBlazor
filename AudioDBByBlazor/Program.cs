@@ -4,14 +4,13 @@ using AudioDBByBlazor.Models;
 using AudioDBByBlazor.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Base de données SQLite pour l'authentification ──────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=audiodb.db"));
 
-// ── ASP.NET Core Identity ────────────────────────────────────────────────────
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -29,11 +28,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/logout";
 });
 
-// ── Services applicatifs ─────────────────────────────────────────────────────
 builder.Services.AddScoped<FavorisService>();
 builder.Services.AddHttpClient<AudioDbService>();
 
-// ── Blazor ───────────────────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -42,7 +39,6 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// ── Migrations automatiques ──────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -55,23 +51,62 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseAntiforgery();
 
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+// ── Endpoint Login (POST) ──────────────
+app.MapPost("/account/login", async (
+    HttpContext context,
+    SignInManager<AppUser> signInManager,
+    [FromForm] string email,
+    [FromForm] string password,
+    [FromForm] string? returnUrl) =>
+{
+    var result = await signInManager.PasswordSignInAsync(email, password, false, false);
+    if (result.Succeeded){
+    return Results.Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
+    }
+    return Results.Redirect("/login?error=1");
+}).DisableAntiforgery();;
 
-// ── Endpoints Auth ────────────────────────────────────────────────────────────
-app.MapPost("/logout", async (SignInManager<AppUser> signInManager) =>
+// ── Endpoint Register (POST) ────────────────────────────────
+app.MapPost("/account/register", async (
+    HttpContext context,
+    UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager,
+    [FromForm] string email,
+    [FromForm] string password,
+    [FromForm] string? displayName) =>
+{
+    var user = new AppUser
+    {
+        UserName = email,
+        Email = email,
+        DisplayName = displayName
+    };
+
+    var result = await userManager.CreateAsync(user, password);
+    if (result.Succeeded)
+    {
+         await signInManager.SignInAsync(user, isPersistent: false);
+        return Results.Redirect("/");
+    }
+
+    var errors = string.Join(",", result.Errors.Select(e => e.Code));
+    return Results.Redirect($"/register?error={Uri.EscapeDataString(errors)}");
+}).DisableAntiforgery();;
+
+// ── Endpoint Logout (POST) ────────────────────────────────────────────────
+app.MapPost("/account/logout", async (SignInManager<AppUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
     return Results.Redirect("/");
-});
+}).DisableAntiforgery();;
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();
