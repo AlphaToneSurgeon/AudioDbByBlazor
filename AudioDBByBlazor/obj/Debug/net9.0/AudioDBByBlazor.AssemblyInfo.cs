@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AudioDBByBlazor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+269598cfef7a50c3f4e85554bd54f7d8a99357d4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a28f81331a2d289f2dca39bbe16d7600405e03aa")]
 [assembly: System.Reflection.AssemblyProductAttribute("AudioDBByBlazor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AudioDBByBlazor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

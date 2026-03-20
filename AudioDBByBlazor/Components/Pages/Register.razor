@@ -10,7 +10,7 @@
         @if (!string.IsNullOrEmpty(Error))
         {
             <div class="error-message">
-                Erreur lors de la création du compte. Vérifiez vos informations.
+                @Error  @*c'est ici que je vient attrapper le messgae d'erreur ecrit dans le programme*@
             </div>
         }
 

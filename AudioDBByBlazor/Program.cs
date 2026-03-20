@@ -95,11 +95,18 @@ app.MapPost("/account/register", async (
         return Results.Redirect("/");
     }
 
-    var errors = string.Join(",", result.Errors.Select(e => e.Code));
-    return Results.Redirect($"/register?error={Uri.EscapeDataString(errors)}");
+   string errorMsg;
+    if (result.Errors.Any(e => e.Code == "DuplicateUserName" || e.Code == "DuplicateEmail"))
+        errorMsg = "Cet email est déjà utilisé. Connectez-vous ou utilisez un autre email.";
+    else if (result.Errors.Any(e => e.Code.Contains("Password")))
+        errorMsg = "Mot de passe trop faible. Minimum 6 caractères.";
+    else
+        errorMsg = "Erreur lors de la création du compte. Vérifiez vos informations.";
+
+    return Results.Redirect($"/register?error={Uri.EscapeDataString(errorMsg)}");
 }).DisableAntiforgery();;
 
-// ── Endpoint Logout (POST) ────────────────────────────────────────────────
+// ── Endpoint Logout (POST) ──────────
 app.MapPost("/account/logout", async (SignInManager<AppUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
