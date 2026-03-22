@@ -1,0 +1,30 @@
+[
+  {
+    "Id": "d627c583-100c-4a6c-99b6-55333def4837",
+    "UserId": "62b99545-90e2-41c4-a9ea-f8d8cf7504d4",
+    "IdArtist": "111239",
+    "StrArtist": "Coldplay",
+    "StrArtistThumb": "https://r2.theaudiodb.com/images/media/artist/thumb/uxrqxy1347913147.jpg",
+    "StrGenre": "Alternative Rock",
+    "StrCountry": "London, England",
+    "NotePersonnelle": null,
+    "NoteSur10": null,
+    "TagsPersonnels": null,
+    "DateAjout": "2026-03-14T14:43:49.9534249+01:00",
+    "DateModification": "2026-03-14T14:43:49.9534365+01:00"
+  },
+  {
+    "Id": "9b33f63f-1751-419b-95b1-ddd7b5c36599",
+    "UserId": "62b99545-90e2-41c4-a9ea-f8d8cf7504d4",
+    "IdArtist": "112123",
+    "StrArtist": "My Chemical Romance",
+    "StrArtistThumb": "https://r2.theaudiodb.com/images/media/artist/thumb/my-chemical-romance-4fd5c6402ea03.jpg",
+    "StrGenre": "Alternative Rock",
+    "StrCountry": "New Jersey, USA",
+    "NotePersonnelle": null,
+    "NoteSur10": null,
+    "TagsPersonnels": null,
+    "DateAjout": "2026-03-14T14:44:40.6226622+01:00",
+    "DateModification": "2026-03-14T14:44:40.6226701+01:00"
+  }
+]

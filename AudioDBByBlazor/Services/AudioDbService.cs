@@ -2,11 +2,8 @@ using AudioDBByBlazor.Models;
 using System.Text.Json;
 
 namespace AudioDBByBlazor.Services;
-
-/// <summary>
 /// Service responsable des appels à l'API TheAudioDB.
 /// Fournit des méthodes pour rechercher des artistes et récupérer leurs albums.
-/// </summary>
 public class AudioDbService
 {
     private readonly HttpClient _http;
@@ -21,12 +18,9 @@ public class AudioDbService
     {
         _http = http;
     }
-
-    /// <summary>
     /// Recherche des artistes par nom via TheAudioDB.
-    /// </summary>
-    /// <param name="name">Nom de l'artiste à rechercher</param>
-    /// <returns>Liste des artistes correspondants, ou liste vide si aucun résultat</returns>
+    /// param name="name" Nom de l'artiste à rechercher
+    /// Retour Liste des artistes correspondants, ou liste vide si aucun résultat
     public async Task<List<Artist>> SearchArtistsAsync(string name)
     {
         try
@@ -42,12 +36,9 @@ public class AudioDbService
             return new List<Artist>();
         }
     }
-
-    /// <summary>
     /// Récupère les détails complets d'un artiste par son ID.
-    /// </summary>
-    /// <param name="id">Identifiant TheAudioDB de l'artiste</param>
-    /// <returns>L'artiste trouvé, ou null si inexistant</returns>
+    /// Identifiant TheAudioDB de l'artiste
+    /// L'artiste trouvé, ou null si inexistant
     public async Task<Artist?> GetArtistByIdAsync(string id)
     {
         try
@@ -63,12 +54,9 @@ public class AudioDbService
             return null;
         }
     }
-
-    /// <summary>
     /// Récupère la liste des albums d'un artiste.
-    /// </summary>
-    /// <param name="artistId">Identifiant TheAudioDB de l'artiste</param>
-    /// <returns>Liste des albums de l'artiste</returns>
+    /// Identifiant TheAudioDB de l'artiste
+    /// Liste des albums de l'artiste
     public async Task<List<Album>> GetAlbumsByArtistAsync(string artistId)
     {
         try
